@@ -8,6 +8,8 @@
 import UIKit
 
 class ViewController: UIViewController {
+    
+    private var tasks: [String] = []
 
     private lazy var taskList: UITableView = {
         let list = UITableView()
@@ -20,15 +22,45 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = .systemBackground
+        loadTask()
         setupNavigationBar()
         setupLayout()
     }
     
     @objc func didTapAddTask() {
         print("Botão de adicionar pressionado")
+        let alert = UIAlertController(title: "New task",
+                                      message: "Add new task",
+                                      preferredStyle: .alert)
+        alert.addTextField {
+            textField in textField.placeholder = "Enter your task"
+        }
+        
+        let addAction = UIAlertAction(title: "Add", style: .default) { _ in
+            if let taskText = alert.textFields?.first?.text, !taskText.isEmpty {
+                print("Task added: \(taskText)")
+                self.tasks.append(taskText)
+                self.saveTask()
+                self.taskList.reloadData()
+            }
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alert.addAction(addAction)
+        alert.addAction(cancelAction)
+        present(alert, animated: true)
     }
     
+    private func saveTask() {
+        UserDefaults.standard.set(tasks, forKey: "tasks")
+    }
+
+    private func loadTask() {
+        tasks = UserDefaults.standard.stringArray(forKey: "tasks") ?? []
+    }
+
     private func setupNavigationBar() {
         title = "ToDo List 📓"
         navigationController?.navigationBar.prefersLargeTitles = true
@@ -49,12 +81,12 @@ class ViewController: UIViewController {
 
 extension ViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 10
+        return tasks.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = taskList.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath)
-        cell.textLabel?.text = "Tarefa \(indexPath.row + 1)"
+        cell.textLabel?.text = tasks[indexPath.row]
         return cell
     }
 }
