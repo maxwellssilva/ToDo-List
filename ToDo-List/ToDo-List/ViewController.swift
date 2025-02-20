@@ -23,7 +23,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        loadTask()
+        loadTasks()
         setupNavigationBar()
         setupLayout()
     }
@@ -41,8 +41,12 @@ class ViewController: UIViewController {
             if let taskText = alert.textFields?.first?.text, !taskText.isEmpty {
                 print("Task added: \(taskText)")
                 self.tasks.append(taskText)
-                self.saveTask()
+                self.saveTasks()
                 self.taskList.reloadData()
+            } else {
+                let errorAlert = UIAlertController(title: "Error", message: "Task cannot be empty", preferredStyle: .alert)
+                errorAlert.addAction(UIAlertAction(title: "Ok", style: .default))
+                self.present(errorAlert, animated: true)
             }
         }
         
@@ -53,11 +57,11 @@ class ViewController: UIViewController {
         present(alert, animated: true)
     }
     
-    private func saveTask() {
+    private func saveTasks() {
         UserDefaults.standard.set(tasks, forKey: "tasks")
     }
 
-    private func loadTask() {
+    private func loadTasks() {
         tasks = UserDefaults.standard.stringArray(forKey: "tasks") ?? []
     }
 
@@ -87,6 +91,15 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = taskList.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath)
         cell.textLabel?.text = tasks[indexPath.row]
+        cell.textLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            tasks.remove(at: indexPath.row)
+            saveTasks()
+            taskList.deleteRows(at: [indexPath], with: .automatic)
+        }
     }
 }
