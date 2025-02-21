@@ -23,60 +23,46 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        UserDefaults.standard.removeObject(forKey: "tasks")
-        loadTasks()
+        tasks = TaskManager.shared.loadTasks()
         setupNavigationBar()
         setupLayout()
     }
     
     @objc func didTapAddTask() {
         print("Botão de adicionar pressionado")
-        let alert = UIAlertController(title: "New task",
-                                      message: "Add new task",
+        showAddTaskAlert()
+    }
+    
+    private func showAddTaskAlert() {
+        let alert = UIAlertController(title: "Nova tarefa",
+                                      message: "Adicionar nova tarefa",
                                       preferredStyle: .alert)
-        alert.addTextField {
-            textField in textField.placeholder = "Enter your task"
+        alert.addTextField { textField in
+            textField.placeholder = "Digite sua tarefa"
         }
         
-        let addAction = UIAlertAction(title: "Add", style: .default) { _ in
-            if let taskText = alert.textFields?.first?.text, !taskText.isEmpty {
-                print("Task added: \(taskText)")
-                self.tasks.append(Task(title: taskText, isCompleted: false))
-                self.saveTasks()
-                self.taskList.reloadData()
-            } else {
-                let errorAlert = UIAlertController(title: "Error", message: "Task cannot be empty", preferredStyle: .alert)
-                errorAlert.addAction(UIAlertAction(title: "Ok", style: .default))
-                self.present(errorAlert, animated: true)
+        let addAction = UIAlertAction(title: "Adicionar", style: .default) { _ in
+            guard let taskText = alert.textFields?.first?.text, !taskText.isEmpty else {
+                self.showErrorMessage()
+                return
             }
+            
+            self.tasks.append(Task(title: taskText, isCompleted: false))
+            TaskManager.shared.saveTasks(self.tasks)
+            self.taskList.reloadData()
         }
         
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        let cancelAction = UIAlertAction(title: "Cancelar", style: .cancel)
         
         alert.addAction(addAction)
         alert.addAction(cancelAction)
         present(alert, animated: true)
     }
     
-    private func saveTasks() {
-        do {
-            let data = try JSONEncoder().encode(tasks)
-            UserDefaults.standard.set(data, forKey: "tasks")
-        } catch {
-            print("Erro ao salvar tarefas: \(error)")
-        }
-    }
-
-    private func loadTasks() {
-        if let data = UserDefaults.standard.data(forKey: "tasks") {
-            do {
-                tasks = try JSONDecoder().decode([Task].self, from: data)
-            } catch {
-                print("Erro ao carregar tarefas: \(error)")
-            }
-        } else {
-            tasks = []
-        }
+    private func showErrorMessage() {
+        let errorAlert = UIAlertController(title: "Error", message: "A tarefa não pode estar vazia", preferredStyle: .alert)
+        errorAlert.addAction(UIAlertAction(title: "Ok", style: .default))
+        present(errorAlert, animated: true)
     }
 
     private func setupNavigationBar() {
@@ -112,15 +98,15 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tasks[indexPath.row].isCompleted.toggle()
-        saveTasks()
+        tasks[indexPath.row].toggleCompletion()
+        TaskManager.shared.saveTasks(tasks)
         tableView.reloadRows(at: [indexPath], with: .automatic)
     }
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             tasks.remove(at: indexPath.row)
-            saveTasks()
+            TaskManager.shared.saveTasks(tasks)
             taskList.deleteRows(at: [indexPath], with: .automatic)
         }
     }
