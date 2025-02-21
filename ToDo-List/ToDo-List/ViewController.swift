@@ -9,7 +9,7 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    private var tasks: [String] = []
+    private var tasks: [Task] = []
 
     private lazy var taskList: UITableView = {
         let list = UITableView()
@@ -23,6 +23,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
+        UserDefaults.standard.removeObject(forKey: "tasks")
         loadTasks()
         setupNavigationBar()
         setupLayout()
@@ -40,7 +41,7 @@ class ViewController: UIViewController {
         let addAction = UIAlertAction(title: "Add", style: .default) { _ in
             if let taskText = alert.textFields?.first?.text, !taskText.isEmpty {
                 print("Task added: \(taskText)")
-                self.tasks.append(taskText)
+                self.tasks.append(Task(title: taskText, isCompleted: false))
                 self.saveTasks()
                 self.taskList.reloadData()
             } else {
@@ -58,11 +59,24 @@ class ViewController: UIViewController {
     }
     
     private func saveTasks() {
-        UserDefaults.standard.set(tasks, forKey: "tasks")
+        do {
+            let data = try JSONEncoder().encode(tasks)
+            UserDefaults.standard.set(data, forKey: "tasks")
+        } catch {
+            print("Erro ao salvar tarefas: \(error)")
+        }
     }
 
     private func loadTasks() {
-        tasks = UserDefaults.standard.stringArray(forKey: "tasks") ?? []
+        if let data = UserDefaults.standard.data(forKey: "tasks") {
+            do {
+                tasks = try JSONDecoder().decode([Task].self, from: data)
+            } catch {
+                print("Erro ao carregar tarefas: \(error)")
+            }
+        } else {
+            tasks = []
+        }
     }
 
     private func setupNavigationBar() {
@@ -90,9 +104,17 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = taskList.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath)
-        cell.textLabel?.text = tasks[indexPath.row]
+        let task = tasks[indexPath.row]
+        cell.textLabel?.text = task.title
         cell.textLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        cell.accessoryType = task.isCompleted ? .checkmark : .none
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tasks[indexPath.row].isCompleted.toggle()
+        saveTasks()
+        tableView.reloadRows(at: [indexPath], with: .automatic)
     }
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
