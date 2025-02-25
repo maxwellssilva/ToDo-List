@@ -20,6 +20,7 @@ class TodoListViewController: UIViewController {
         searchBar.tintColor = .systemBackground
         searchBar.barTintColor = .systemBackground
         searchBar.searchBarStyle = .minimal
+        searchBar.showsCancelButton = true
         searchBar.translatesAutoresizingMaskIntoConstraints = false
         return searchBar
     }()
@@ -120,14 +121,31 @@ extension TodoListViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tasks[indexPath.row].toggleCompletion()
+        if isSearch {
+            let taskIndex = tasks.firstIndex { $0.title == filterTasks[indexPath.row].title }
+            if let taskIndex = taskIndex {
+                tasks[taskIndex].toggleCompletion()
+            }
+        } else {
+            tasks[indexPath.row].toggleCompletion()
+        }
+        
         TaskManager.shared.saveTasks(tasks)
         tableView.reloadRows(at: [indexPath], with: .automatic)
     }
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-            tasks.remove(at: indexPath.row)
+            if isSearch {
+                let taskIndex = tasks.firstIndex { $0.title == filterTasks[indexPath.row].title }
+                if let taskIndex = taskIndex {
+                    tasks.remove(at: taskIndex)
+                    filterTasks.remove(at: indexPath.row)
+                }
+            } else {
+                tasks.remove(at: indexPath.row)
+            }
+            
             TaskManager.shared.saveTasks(tasks)
             taskList.deleteRows(at: [indexPath], with: .automatic)
         }
@@ -151,7 +169,11 @@ extension TodoListViewController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         isSearch = false
         searchBar.text = ""
+        searchBar.resignFirstResponder()
         taskList.reloadData()
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
     }
 }
