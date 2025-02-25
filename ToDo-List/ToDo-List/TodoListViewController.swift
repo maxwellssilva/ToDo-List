@@ -20,7 +20,6 @@ class TodoListViewController: UIViewController {
         searchBar.tintColor = .systemBackground
         searchBar.barTintColor = .systemBackground
         searchBar.searchBarStyle = .minimal
-        searchBar.showsCancelButton = true
         searchBar.translatesAutoresizingMaskIntoConstraints = false
         return searchBar
     }()
@@ -29,7 +28,7 @@ class TodoListViewController: UIViewController {
         let list = UITableView()
         list.dataSource = self
         list.delegate = self
-        list.register(UITableViewCell.self, forCellReuseIdentifier: "TaskCell")
+        list.register(TaskCell.self, forCellReuseIdentifier: "TaskCell")
         list.translatesAutoresizingMaskIntoConstraints = false
         return list
     }()
@@ -64,7 +63,8 @@ class TodoListViewController: UIViewController {
                 return
             }
             
-            self.tasks.append(Task(title: taskText, isCompleted: false))
+            //self.tasks.append(Task(title: taskText, isCompleted: false))
+            self.tasks.append(Task(title: taskText, isCompleted: false, status: .notStarted, targetDate: "25/02/2025"))
             TaskManager.shared.saveTasks(self.tasks)
             self.taskList.reloadData()
         }
@@ -112,11 +112,12 @@ extension TodoListViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = taskList.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath)
+        guard let cell = taskList.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath) as? TaskCell else {
+            return UITableViewCell()
+        }
+        
         let task = isSearch ? filterTasks[indexPath.row] : tasks[indexPath.row]
-        cell.textLabel?.text = task.title
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        cell.accessoryType = task.isCompleted ? .checkmark : .none
+        cell.configure(with: task)
         return cell
     }
     
