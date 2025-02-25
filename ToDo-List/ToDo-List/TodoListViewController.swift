@@ -37,6 +37,7 @@ class TodoListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
+        //UserDefaults.standard.removeObject(forKey: "tasks")
         tasks = TaskManager.shared.loadTasks()
         setupNavigationBar()
         setupLayout()
