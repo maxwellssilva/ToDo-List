@@ -7,10 +7,23 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class TodoListViewController: UIViewController {
     
     private var tasks: [Task] = []
+    private var filterTasks: [Task] = []
+    private var isSearch: Bool = false
 
+    //MARK: - Componentes
+    private var searchBar: UISearchBar = {
+        let searchBar = UISearchBar()
+        searchBar.placeholder = "Pesquise por uma atividade"
+        searchBar.tintColor = .systemBackground
+        searchBar.barTintColor = .systemBackground
+        searchBar.searchBarStyle = .minimal
+        searchBar.translatesAutoresizingMaskIntoConstraints = false
+        return searchBar
+    }()
+    
     private lazy var taskList: UITableView = {
         let list = UITableView()
         list.dataSource = self
@@ -20,6 +33,7 @@ class ViewController: UIViewController {
         return list
     }()
     
+    //MARK: - Ciclo de vida
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -28,6 +42,7 @@ class ViewController: UIViewController {
         setupLayout()
     }
     
+    //MARK: - Métodos
     @objc func didTapAddTask() {
         print("Botão de adicionar pressionado")
         showAddTaskAlert()
@@ -73,24 +88,30 @@ class ViewController: UIViewController {
     }
 
     func setupLayout() {
+        view.addSubview(searchBar)
         view.addSubview(taskList)
         NSLayoutConstraint.activate([
-            taskList.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            
+            taskList.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
             taskList.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             taskList.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             taskList.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+        searchBar.delegate = self
     }
 }
 
-extension ViewController: UITableViewDataSource, UITableViewDelegate {
+extension TodoListViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return tasks.count
+        return isSearch ? filterTasks.count : tasks.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = taskList.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath)
-        let task = tasks[indexPath.row]
+        let task = isSearch ? filterTasks[indexPath.row] : tasks[indexPath.row]
         cell.textLabel?.text = task.title
         cell.textLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         cell.accessoryType = task.isCompleted ? .checkmark : .none
@@ -109,5 +130,27 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
             TaskManager.shared.saveTasks(tasks)
             taskList.deleteRows(at: [indexPath], with: .automatic)
         }
+    }
+}
+
+extension TodoListViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchText.isEmpty {
+            isSearch = false
+            filterTasks = []
+        } else {
+            isSearch = true
+            filterTasks = tasks.filter { tasks in
+                return tasks.title.lowercased().contains(searchText.lowercased())
+            }
+        }
+        taskList.reloadData()
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        isSearch = false
+        searchBar.text = ""
+        taskList.reloadData()
+        searchBar.resignFirstResponder()
     }
 }
