@@ -11,26 +11,39 @@ class TaskCell: UITableViewCell {
     
     private lazy var titleTask: UILabel = {
         let title = UILabel()
-        title.font = UIFont(name: "HelveticaNeue-CondensedBlack", size: 18)
+        title.font = UIFont(name: "HelveticaNeue", size: 18)
         title.textColor = .label
+        //title.numberOfLines = 0
         title.translatesAutoresizingMaskIntoConstraints = false
         return title
     }()
     
     private lazy var dateTask: UILabel = {
         let date = UILabel()
-        date.font = UIFont(name: "HelveticaNeue-CondensedBlack", size: 16)
+        date.font = UIFont(name: "HelveticaNeue", size: 16)
         date.textColor = .label
+        //date.numberOfLines = 0
         date.translatesAutoresizingMaskIntoConstraints = false
         return date
     }()
     
     private lazy var statusTask: UILabel = {
-        let status = UILabel()
-        status.font = UIFont(name: "HelveticaNeue-CondensedBlack", size: 16)
-        return status
+        let label = UILabel()
+        label.font = UIFont(name: "HelveticaNeue", size: 16)
+        //label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
     }()
 
+    private lazy var informativeTask: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [titleTask, dateTask])
+        stack.axis = .vertical
+        stack.spacing = 5
+        stack.alignment = .leading
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+    
     //MARK: - Inicializador
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -43,27 +56,22 @@ class TaskCell: UITableViewCell {
     
     //MARK: Métodos
     func setupTaskCell() {
-        contentView.addSubview(titleTask)
-        contentView.addSubview(dateTask)
-        contentView.addSubview(statusTask)
+        addSubview(informativeTask)
+        addSubview(statusTask)
+        backgroundColor = .systemBackground
         NSLayoutConstraint.activate([
-            titleTask.topAnchor.constraint(equalTo: topAnchor),
-            titleTask.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
-            titleTask.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+            informativeTask.centerYAnchor.constraint(equalTo: centerYAnchor),
+            informativeTask.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
             
-            dateTask.topAnchor.constraint(equalTo: titleTask.bottomAnchor, constant: 5),
-            dateTask.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
-            dateTask.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
-            
-            statusTask.topAnchor.constraint(equalTo: dateTask.bottomAnchor, constant: 5),
-            statusTask.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
-            statusTask.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10)
+            statusTask.leadingAnchor.constraint(equalTo: informativeTask.trailingAnchor, constant: 10),
+            statusTask.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -30),
+            statusTask.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
     }
     
     func configure(with task: Task) {
         titleTask.text = task.title
-        //dateTask.text = task.targetDate
+        dateTask.text = task.targetDate
         setupStatusLabel(for: task)
     }
     

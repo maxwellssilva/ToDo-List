@@ -29,6 +29,7 @@ class TodoListViewController: UIViewController {
         list.dataSource = self
         list.delegate = self
         list.register(TaskCell.self, forCellReuseIdentifier: "TaskCell")
+        list.rowHeight = 60
         list.translatesAutoresizingMaskIntoConstraints = false
         return list
     }()
@@ -63,8 +64,11 @@ class TodoListViewController: UIViewController {
                 return
             }
             
-            //self.tasks.append(Task(title: taskText, isCompleted: false))
-            self.tasks.append(Task(title: taskText, isCompleted: false, status: .notStarted, targetDate: "25/02/2025"))
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "dd/MM/yyyy"
+            let currentDate = dateFormatter.string(from: Date())
+            
+            self.tasks.append(Task(title: taskText, isCompleted: false, status: .notStarted, targetDate: currentDate))
             TaskManager.shared.saveTasks(self.tasks)
             self.taskList.reloadData()
         }
@@ -106,6 +110,7 @@ class TodoListViewController: UIViewController {
     }
 }
 
+//MARK: - Extension
 extension TodoListViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return isSearch ? filterTasks.count : tasks.count

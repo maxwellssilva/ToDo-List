@@ -12,9 +12,17 @@ struct Task: Codable {
     var targetDate: String
     
     mutating func toggleCompletion() {
-        isCompleted.toggle()
-        status = isCompleted ? .completed : .inProgress
+        switch status {
+        case .notStarted:
+            status = .inProgress
+        case .inProgress:
+            status = .completed
+        case .completed:
+            status = .notStarted
+        }
+        isCompleted = (status == .completed)
     }
+
 }
 
 enum TaskStatus: String, Codable {
