@@ -61,7 +61,7 @@ class TaskCell: UITableViewCell {
         backgroundColor = .systemBackground
         NSLayoutConstraint.activate([
             informativeTask.centerYAnchor.constraint(equalTo: centerYAnchor),
-            informativeTask.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+            informativeTask.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             
             statusTask.leadingAnchor.constraint(equalTo: informativeTask.trailingAnchor, constant: 10),
             statusTask.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -30),
